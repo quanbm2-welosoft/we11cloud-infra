@@ -1,0 +1,12 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+terraform.tfvars
+*.auto.tfvars
+
+!environments/*.tfvars
+
+.idea/
+.vscode/
