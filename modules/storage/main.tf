@@ -13,7 +13,7 @@ resource "linode_object_storage_bucket" "tf_state" {
 resource "linode_object_storage_bucket" "ingest_raw" {
   label  = "we11-ingest-raw"
   region = var.region
-  acl    = "private"
+  acl    = "public-read"
 
   # lifecycle {
   #   prevent_destroy = true # Chống xóa nhầm bucket khi chạy terraform destroy
