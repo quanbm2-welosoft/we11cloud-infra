@@ -5,11 +5,11 @@ on:
     paths:
       - "**.tf"
       - "**.tfvars"
-    push:
-      branches: [main]
-      paths:
-        - "**.tf"
-        - "**.tfvars"
+  push:
+    branches: [main]
+    paths:
+      - "**.tf"
+      - "**.tfvars"
 
 env:
   TF_VAR_linode_api_token: ${{ secrets.LINODE_API_TOKEN }}
