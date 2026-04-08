@@ -7,5 +7,6 @@ enable_worker        = false
 app_port             = 3007
 admin_ips            = []
 authorized_keys      = []
+storage_endpoint     = "https://sg-sin-1.linodeobjects.com"
 
 # Staging dùng instance nhỏ hơn (nanode-1) để tiết kiệm chi phí test.

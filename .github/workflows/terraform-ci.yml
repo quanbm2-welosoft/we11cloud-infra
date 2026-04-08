@@ -46,7 +46,8 @@ jobs:
 
       - name: tfsec
         uses: aquasecurity/tfsec-action@v1.0.3
-        with: soft_fail:false
+        with:
+          soft_fail: false
 
       - name: checkov
         uses: bridgecrewio/checkov-action@v12
@@ -56,12 +57,87 @@ jobs:
           quiet: true
           soft_fail: false
 
+  # policy-validate — kiểm tra bucket policies & ACL đúng chuẩn trong Terraform plan
+  policy-validate:
+    name: Policy Validate
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5"
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Plan (JSON)
+        run: |
+          terraform plan -out=tfplan
+          terraform show -json tfplan > tfplan.json
+
+      - name: Validate ingest-raw Deny Policy exists
+        run: |
+          if ! jq -e '
+            .planned_values.root_module.child_modules[]
+            | select(.address == "module.storage")
+            | .resources[]
+            | select(.address | contains("aws_s3_bucket_policy.ingest_raw_deny_public"))
+          ' tfplan.json > /dev/null 2>&1; then
+            echo "❌ FAIL: ingest_raw_deny_public policy missing"
+            exit 1 
+          fi
+          echo "✅ ingest_raw_deny_public policy found"
+
+      - name: Validate delivery-hls Allow Policy exists
+        run: |
+          if ! jq -e '
+            .planned_values.root_module.child_modules[]
+            | select(.address == "module.storage")
+            | .resources[]
+            | select(.address | contains("aws_s3_bucket_policy.delivery_hls_allow_public"))
+          ' tfplan.json > /dev/null/ 2>&1; then
+            echo "❌ FAIL: delivery_hls_allow_public policy missing"
+            exit 1
+          fi
+          echo "✅ delivery_hls_allow_public policy found"
+
+      - name: Validate ingest-raw ACL is private
+        run: |
+          ACL=$(jq -r '
+            .planned_values.root_module.child_modules[]
+            | select(.address == "module.storage")
+            | resources[]
+            | select(.address | contains("linode_object_storage_bucket.ingest_raw"))
+            | .values.acl
+          ' tfplan.json)
+          if [ "$ACL" != "private" ]; then
+            echo "❌ FAIL: ingest-raw ACL is '$ACL', expected 'private'"
+            exit 1
+          fi
+          echo "✅ ingest-raw ACL = private"
+
+      - name: Validate delivery-hls ACL is public-read
+        run: |
+          ACL=$(jq -r '
+            .planned_values.root_module.child_modules[]
+            | select(.address == "module.storage")
+            | .resources[]
+            | select(.address | contains("linode_object_storage_bucket.delivery_hls"))
+            | .values.acl
+          ' tfplan.json) 
+          if [ "$ACL" != "public-read" ]; then
+            echo "❌ FAIL: delivery-hls ACL is '$ACL', expected 'public-read'"
+            exit 1
+          fi
+          echo "✅ delivery-hls ACL = public-read"
+
   # plan — chỉ chạy trên PR, show output lên PR comment để team review
   plan:
     name: Plan
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    needs: [lint, security-scan]
+    needs: [lint, security-scan, policy-validate]
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -104,7 +180,7 @@ jobs:
     name: Apply
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == "push"
-    needs: [lint, security-scan]
+    needs: [lint, security-scan, policy-validate]
     environment: production
     steps:
       - uses: actions/checkout@v4

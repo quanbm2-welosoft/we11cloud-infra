@@ -2,7 +2,7 @@ resource "linode_instance" "api_gateway" {
   label  = "${var.project}-api-${var.environment}"
   region = var.region
   type   = var.api_instance_type
-  image  = "linode/ubuntu24.04" 
+  image  = "linode/ubuntu24.04"
   # g6-standard-2 = 4GB RAM, 2 CPU — đủ cho NestJS + ClamAV
 
 
@@ -35,13 +35,13 @@ resource "linode_instance" "api_gateway" {
 
 resource "linode_instance" "worker" {
   # mặc định false = 0 server, Week 2 đổi thành true = tạo 1 server. Sau này scale lên 10 chỉ cần đổi số
-  count = var.enable_worker ? 1 : 0 
+  count = var.enable_worker ? 1 : 0
 
   #g6-dedicated-4 = 8GB RAM, 4 dedicated CPU — cần CPU mạnh cho FFmpeg transcode
   label  = "${var.project}-worker-${var.environment}"
   region = var.region
   type   = var.worker_instance_type
-  image  = "linode/ubuntu24.04" 
+  image  = "linode/ubuntu24.04"
 
   root_pass       = var.root_password
   authorized_keys = var.authorized_keys
@@ -91,7 +91,7 @@ resource "linode_firewall" "api_gateway" {
   # 3310 chỉ mở cho VPC (10.0.1.0/24) — ClamAV scan virus, chỉ internal gọi được
   inbound {
     label    = "allow-clamav-vpc"
-    action   = "ACCEPT" 
+    action   = "ACCEPT"
     protocol = "TCP"
     ports    = "3310"
     ipv4     = ["10.0.1.0/24"]
@@ -110,7 +110,7 @@ resource "linode_firewall" "api_gateway" {
   }
 
   # inbound_policy = "DROP" — mọi traffic khác bị chặn hết (whitelist approach)
-  inbound_policy  = "DROP"
+  inbound_policy = "DROP"
 
   # outbound_policy = "ACCEPT" — cho phép server gọi ra ngoài (tải package, gọi API...)
   outbound_policy = "ACCEPT"
@@ -144,7 +144,7 @@ resource "linode_firewall" "worker" {
     }
   }
 
-  inbound_policy  = "DROP" 
+  inbound_policy  = "DROP"
   outbound_policy = "ACCEPT"
 
   # linode_instance.worker[0].id — vì dùng count, phải truy cập bằng index [0]

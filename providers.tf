@@ -5,7 +5,7 @@ provider "linode" {
 
 # Trick quan trọng nhất,  Akamai object storage tương thích S3 API, nên dùng AWS provider nhưng trỏ endpoint sang Linode
 provider "aws" {
-  region     = "sg-sin-2" // dummy value, AWS provider bắt buộc phải có nhưng không ảnh hưởng gì 
+  region     = "us-east-1"
   access_key = var.linode_obj_access_key
   secret_key = var.linode_obj_secret_key
 
@@ -13,9 +13,10 @@ provider "aws" {
   skip_metadata_api_check     = true
   skip_region_validation      = true
   skip_requesting_account_id  = true
-  # Tắt hết validation của AWS vì không phải AWS thật
+
+  s3_use_path_style = true
 
   endpoints {
-    s3 = "https://${var.region}.linodeobjects.com" // Gọi sang Akamai
+    s3 = var.storage_endpoint
   }
 }

@@ -71,3 +71,8 @@ variable "authorized_keys" {
   type    = list(string)
   default = []
 }
+
+variable "storage_endpoint" {
+  type    = string
+  default = "https://sg-sin-1.linodeobjects.com"
+}

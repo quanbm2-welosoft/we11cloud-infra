@@ -13,20 +13,21 @@ output "storage_endpoint" {
   value = "https://${var.region}.linodeobjects.com"
 }
 
-output "nestjs_access_key" {
-  value = linode_object_storage_key.nestjs.access_key
-}
+# Commented out — matching resources are disabled in main.tf
+# output "nestjs_access_key" {
+#   value = linode_object_storage_key.nestjs.access_key
+# }
 
-output "nestjs_secret_key" {
-  value     = linode_object_storage_key.nestjs.secret_key
-  sensitive = true
-}
+# output "nestjs_secret_key" {
+#   value     = linode_object_storage_key.nestjs.secret_key
+#   sensitive = true
+# }
 
-output "worker_access_key" {
-  value = linode_object_storage_key.worker.access_key
-}
+# output "worker_access_key" {
+#   value = linode_object_storage_key.worker.access_key
+# }
 
-output "worker_secret_key" {
-  value     = linode_object_storage_key.worker.secret_key
-  sensitive = true
-}
+# output "worker_secret_key" {
+#   value     = linode_object_storage_key.worker.secret_key
+#   sensitive = true
+# }
