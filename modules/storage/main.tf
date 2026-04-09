@@ -32,32 +32,32 @@ resource "linode_object_storage_bucket" "delivery_hls" {
 }
 
 # read_write trên ingest-raw — NestJS upload video lên đây
-# resource "linode_object_storage_key" "nestjs" {
-#   label = "${var.project}-nestjs-${var.environment}"
+resource "linode_object_storage_key" "nestjs" {
+  label = "${var.project}-nestjs-${var.environment}"
 
-#   bucket_access {
-#     bucket_name = linode_object_storage_bucket.ingest_raw.label
-#     region      = var.region
-#     permissions = "read_write"
-#   }
-# }
+  bucket_access {
+    bucket_name = linode_object_storage_bucket.ingest_raw.label
+    region      = var.region
+    permissions = "read_write"
+  }
+}
 
 # read_only trên ingest-raw (đọc video gốc) + read_write trên delivery-hls (ghi file HLS sau transcode)
-# resource "linode_object_storage_key" "worker" {
-#   label = "${var.project}-worker-${var.environment}"
+resource "linode_object_storage_key" "worker" {
+  label = "${var.project}-worker-${var.environment}"
 
-#   bucket_access {
-#     bucket_name = linode_object_storage_bucket.ingest_raw.label
-#     region      = var.region
-#     permissions = "read_only"
-#   }
+  bucket_access {
+    bucket_name = linode_object_storage_bucket.ingest_raw.label
+    region      = var.region
+    permissions = "read_only"
+  }
 
-#   bucket_access {
-#     bucket_name = linode_object_storage_bucket.delivery_hls.label
-#     region      = var.region
-#     permissions = "read_write"
-#   }
-# }
+  bucket_access {
+    bucket_name = linode_object_storage_bucket.delivery_hls.label
+    region      = var.region
+    permissions = "read_write"
+  }
+}
 
 # resource "aws_s3_bucket_lifecycle_configuration" "ingest_raw_expiry" {
 #   bucket = linode_object_storage_bucket.ingest_raw.label
