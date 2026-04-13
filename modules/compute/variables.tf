@@ -49,3 +49,13 @@ variable "authorized_keys" {
   type    = list(string)
   default = []
 }
+
+variable "redis_instance_type" {
+  type    = string
+  default = "g6-standard-1"
+}
+
+variable "redis_password" {
+  type      = string
+  sensitive = true
+} 

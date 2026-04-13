@@ -27,9 +27,11 @@ module "compute" {
   subnet_id            = module.network.subnet_id
   api_instance_type    = var.api_instance_type
   worker_instance_type = var.worker_instance_type
+  redis_instance_type  = var.redis_instance_type
   enable_worker        = var.enable_worker
   app_port             = var.app_port
   admin_ips            = var.admin_ips
   root_password        = var.root_password
+  redis_password       = var.redis_password
   authorized_keys      = var.authorized_keys
 }

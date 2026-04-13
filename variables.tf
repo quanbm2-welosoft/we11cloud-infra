@@ -72,6 +72,17 @@ variable "authorized_keys" {
   default = []
 }
 
+variable "redis_instance_type" {
+  type    = string
+  default = "g6-standard-1"
+}
+
+variable "redis_password" {
+  description = "Mật khẩu auth cho Redis (truyền qua TF_VAR_redis_password)"
+  type        = string
+  sensitive   = true
+}
+
 variable "storage_endpoint" {
   type    = string
   default = "https://sg-sin-1.linodeobjects.com"

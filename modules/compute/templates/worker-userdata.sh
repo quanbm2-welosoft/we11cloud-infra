@@ -17,3 +17,10 @@ curl -fsSL https://get.docker.com | bash
 systemctl enable --now docker
 
 echo "Worker ready" 
+
+apt-get install -y ufw
+ufw default deny incoming 
+ufw default allow outgoing
+ufw allow 22/tcp
+ufw allow from 10.0.1.10 to any port 8080 proto tcp
+ufw --force enable

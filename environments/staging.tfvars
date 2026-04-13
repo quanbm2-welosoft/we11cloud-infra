@@ -5,7 +5,7 @@ api_instance_type    = "g6-nanode-1"
 worker_instance_type = "g6-standard-2"
 enable_worker        = false
 app_port             = 3007
-admin_ips            = []
+admin_ips            = ["42.115.193.13/32"]
 authorized_keys      = []
 storage_endpoint     = "https://sg-sin-1.linodeobjects.com"
 

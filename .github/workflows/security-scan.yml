@@ -1,0 +1,70 @@
+name: Security Port Scan
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+
+jobs:
+  nmap-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install nmap
+        run: sudo apt-get update && sudo apt-get install -y nmap
+
+      - name: Scan API Gateway
+        run: |
+          echo "Scanning API Gateway: ${{ secrets.LINODE_API_GATEWAY_IP }}"
+          nmap -p- -T4 --open ${{ secrets.LINODE_API_GATEWAY_IP }} -oG /tmp/api.txt
+
+          UNEXPECTED=$(grep "/open/" /tmp/api.txt | grep -oE "[0-9]+/open" | grep -vE "^(22|80|443)/open" || true)
+
+          if [ -n "$UNEXPECTED" ]; then
+            echo "::error::API Gateway has unexpected open ports: $UNEXPECTED"
+            exit 1
+          fi
+
+          echo "API Gateway: only 22/80/443 open"
+
+      - name: Scan Redis
+        run: |
+          echo "Scanning Redis: ${{ secrets.LINODE_REDIS_IP }}"
+          nmap -p- -T4 --open ${{ secrets.LINODE_REDIS_IP }} -oG /tmp/redis.txt
+
+          UNEXPECTED=$(grep "/open/" /tmp/redis.txt | grep -oE "[0-9]+/open" | grep -vE "^22/open" || true)
+
+          if [ -n "$UNEXPECTED" ]; then
+            echo "::error::Redis has unexpected open ports: $UNEXPECTED"
+            exit 1
+          fi
+
+          echo "Redis: no unexpected open ports"
+
+      - name: Scan Worker
+        if: secrets.LINODE_WORKER_IP != ''
+        run: |
+          echo "Scanning Worker: ${{ secrets.LINODE_WORKER_IP }}"
+          nmap -p- -T4 --open ${{ secrets.LINODE_WORKER_IP }} -oG /tmp/worker.txt
+
+          UNEXPECTED=$(grep "/open/" /tmp/worker.txt | grep -oE "[0-9]+/open" | grep -vE "^22/open" || true)
+
+          if [ -n "$UNEXPECTED" ]; then
+            echo "::error::Worker has unexpected open ports: $UNEXPECTED"
+            exit 1
+          fi
+
+          echo "Worker: no unexpected open ports"
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "Security scan FAILED on ${{ github.repository }}. Check ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

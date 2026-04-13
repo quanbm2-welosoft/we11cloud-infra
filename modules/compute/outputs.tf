@@ -13,3 +13,11 @@ output "worker_ip" {
 output "worker_private_ip" {
   value = var.enable_worker ? "10.0.1.20" : null
 }
+
+output "redis_private_ip" {
+  value = "10.0.1.30"
+}
+
+output "redis_ip" {
+  value = linode_instance.redis.ip_address
+}

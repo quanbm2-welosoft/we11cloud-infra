@@ -39,3 +39,8 @@ output "worker_ip" {
   description = "Public IP cua Worker"
   value       = module.compute.worker_ip
 }
+
+output "redis_ip" {
+  description = "Public IP cua Redis"
+  value       = module.compute.redis_ip
+}

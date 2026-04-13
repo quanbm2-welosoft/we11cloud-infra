@@ -66,6 +66,37 @@ resource "linode_instance" "worker" {
   tags = [var.project, var.environment, "worker"]
 }
 
+resource "linode_instance" "redis" {
+  label  = "${var.project}-redis-${var.environment}"
+  region = var.region
+  type   = var.redis_instance_type
+  image  = "linode/ubuntu24.04"
+
+  root_pass       = var.root_password
+  authorized_keys = var.authorized_keys
+
+  interface {
+    purpose = "public"
+  }
+
+  interface {
+    purpose   = "vpc"
+    subnet_id = var.subnet_id
+    ipv4 {
+      vpc = "10.0.1.30"
+    }
+  }
+
+  metadata {
+    user_data = base64encode(templatefile("${path.module}/templates/redis-userdata.sh", {
+      redis_password   = var.redis_password
+      redis_private_ip = "10.0.1.30"
+    }))
+  }
+
+  tags = [var.project, var.environment, "database"]
+}
+
 resource "linode_firewall" "api_gateway" {
   label = "${var.project}-fw-api-${var.environment}"
 
@@ -123,15 +154,9 @@ resource "linode_firewall" "worker" {
 
   label = "${var.project}-fw-worker-${var.environment}"
 
-  # Worker không mở public — chỉ nhận traffic từ VPC (API Gateway gửi job qua private network)
-  # ports = "1-65535" — mở hết port cho VPC vì Worker cần nhận nhiều loại request nội bộ
-  inbound {
-    label    = "allow-vpc"
-    action   = "ACCEPT"
-    protocol = "TCP"
-    ports    = "1-65535"
-    ipv4     = ["10.0.1.0/24"]
-  }
+  # Worker chủ động pull job từ Redis (outbound) — không cần mở inbound port nào từ VPC.
+  # Nguyên tắc least-privilege: KHÔNG mở dải 1-65535. Nếu sau này cần expose health-check
+  # HTTP cho gateway, thêm rule allow port cụ thể (ví dụ 8080) tại đây — chỉ từ 10.0.1.10/32.
 
   dynamic "inbound" {
     for_each = length(var.admin_ips) > 0 ? [1] : []
@@ -149,4 +174,32 @@ resource "linode_firewall" "worker" {
 
   # linode_instance.worker[0].id — vì dùng count, phải truy cập bằng index [0]
   linodes = [linode_instance.worker[0].id]
+}
+
+resource "linode_firewall" "redis" {
+  label = "${var.project}-fw-redis-${var.environment}"
+
+  inbound {
+    label    = "allow-redis-vpc"
+    action   = "ACCEPT"
+    protocol = "TCP"
+    ports    = "6379"
+    ipv4     = ["10.0.1.10/32", "10.0.1.20/32"]
+  }
+
+  dynamic "inbound" {
+    for_each = length(var.admin_ips) > 0 ? [1] : []
+    content {
+      label    = "allow-ssh-admin"
+      action   = "ACCEPT"
+      protocol = "TCP"
+      ports    = "22"
+      ipv4     = var.admin_ips
+    }
+  }
+
+  inbound_policy  = "DROP"
+  outbound_policy = "ACCEPT"
+
+  linodes = [linode_instance.redis.id]
 }

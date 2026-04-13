@@ -31,6 +31,11 @@ resource "linode_object_storage_bucket" "delivery_hls" {
   # }
 }
 
+resource "linode_object_storage_bucket" "db_backups" {
+  region = var.region
+  label  = "we11-db-backups"
+}
+
 # read_write trên ingest-raw — NestJS upload video lên đây
 resource "linode_object_storage_key" "nestjs" {
   label = "${var.project}-nestjs-${var.environment}"
@@ -54,6 +59,12 @@ resource "linode_object_storage_key" "worker" {
 
   bucket_access {
     bucket_name = linode_object_storage_bucket.delivery_hls.label
+    region      = var.region
+    permissions = "read_write"
+  }
+
+  bucket_access {
+    bucket_name = linode_object_storage_bucket.db_backups.label
     region      = var.region
     permissions = "read_write"
   }
